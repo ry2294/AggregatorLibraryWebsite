@@ -1,10 +1,10 @@
 var express = require('express');
 var app = express();
 var router = express.Router();
+var path = require("path");
 var bodyParser = require('body-parser');
 var AWS = require('aws-sdk');
 
-app.use(express.static(__dirname + '/public'));
 app.use(bodyParser.json());
 
 AWS.config.update({
@@ -13,6 +13,10 @@ AWS.config.update({
     region: 'us-west-2'});
     
 var dynamodbDoc = new AWS.DynamoDB.DocumentClient();
+
+router.get('/', function(req, res) {
+  res.sendfile(path.join(__dirname + '/home.html'));
+});
 
 router.post('/tweet', function(req, res) {
     console.log("body = " + JSON.stringify(req.body));
