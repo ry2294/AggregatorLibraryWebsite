@@ -11,18 +11,62 @@
     </head>
     
     <script>
-        var socket = io();
-        socket.on('javatweet', function(tweet){
-        });
-        
-        socket.on('cplusplustweet', function(tweet){
-        });
-        
         function initialize() {
+            var socket = io();
+            var javacount = 0, javatotaltime = 0, cpluspluscount = 0, cplusplustime = 0;
+            
             var map = new google.maps.Map(document.getElementById('map'), {
                 zoom: 3,
                 center: {lat: 39.500, lng: -98.350},
                 mapTypeId: google.maps.MapTypeId.SATELLITE
+            });
+            
+            socket.on('javatweet', function(tweet){
+                console.log(tweet);
+                javacount++;
+                javatotaltime += parseFloat(tweet.time);
+                var marker = new google.maps.Marker({
+                    position: {lat: parseFloat(tweet.lat), lng: parseFloat(tweet.lon)},
+                    map: map,
+                    title: 'Tweet Information',
+                });
+                marker.info = new google.maps.InfoWindow({
+                    position: {lat: parseFloat(tweet.lat), lng: parseFloat(tweet.lon)},
+                    content: '<h5>Text: ' + tweet.text +'</h5>'+ 
+                            '<h5>Sentiment: ' + tweet.sentiment + 
+                            '</h5>' + '<h4>Time: ' + tweet.time + ' milli secs</h5>',
+                    maxWidth: 200
+                });
+                marker.setIcon('http://maps.google.com/mapfiles/ms/icons/red-dot.png');
+                marker.addListener('click', function(){
+                    this.info.open(map, this);
+                });
+                $('#java').html('Avg Time: ' + parseInt(javatotaltime/ javacount) 
+                + ' milli secs<br>Tweets = ' + javacount);
+            });
+            
+            socket.on('cplusplustweet', function(tweet){
+                console.log(tweet);
+                cpluspluscount++;
+                cplusplustime += parseFloat(tweet.time);
+                var marker = new google.maps.Marker({
+                    position: {lat: parseFloat(tweet.lat), lng: parseFloat(tweet.lon)},
+                    map: map,
+                    title: 'Tweet Information',
+                });
+                marker.info = new google.maps.InfoWindow({
+                    position: {lat: parseFloat(tweet.lat), lng: parseFloat(tweet.lon)},
+                    content: '<h5>Text: ' + tweet.text +'</h5>'+ 
+                            '<h5>Sentiment: ' + tweet.sentiment + 
+                            '</h5>' + '<h4>Time: ' + tweet.time + ' milli secs</h5>',
+                    maxWidth: 200
+                });
+                marker.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
+                marker.addListener('click', function(){
+                    this.info.open(map, this);
+                });
+                $('#cplusplus').html(' Avg Time: ' + parseInt(cplusplustime/ cpluspluscount) 
+                + ' milli secs<br>Tweets = ' + cpluspluscount);
             });
         };
     </script>
@@ -38,14 +82,12 @@
             <div class="row">
                 <div class="col-md-6">
                     <h3>C++</h3>
-                    <div class="well">
-                        <p></p>
+                    <div id="cplusplus" class="well">
                     </div>
                 </div>
                 <div class="col-md-6">
                     <h3>Java</h3>
-                    <div class="well">
-                        
+                    <div id = "java" class="well">
                     </div>
                 </div>
             </div>
