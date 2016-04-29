@@ -9,8 +9,8 @@ var _ = require('underscore');
 app.use(bodyParser.json());
 
 AWS.config.update({
-    accessKeyId: '', 
-    secretAccessKey: '',
+    accessKeyId: 'AKIAI4XR5FUYJMO2EN7A', 
+    secretAccessKey: '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',
     region: 'us-west-2'});
     
 var dynamodbDoc = new AWS.DynamoDB.DocumentClient();
@@ -21,7 +21,6 @@ router.get('/', function(req, res) {
 });
 
 router.post('/tweet', function(req, res) {
-    console.log("body = " + JSON.stringify(req.body));
     dynamodbDoc.put({
         TableName: req.body.table,
         Item: {
