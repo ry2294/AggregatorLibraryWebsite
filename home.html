@@ -6,6 +6,7 @@
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
         <script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
         <script async defer
         src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBQ0G5v0Bcx7pxFnJi3c6DcM-97rjMsUho&signed_in=true&libraries=visualization&callback=initialize"></script>
     </head>
@@ -20,6 +21,22 @@
                 center: {lat: 39.500, lng: -98.350},
                 mapTypeId: google.maps.MapTypeId.SATELLITE
             });
+            
+            var javatrace = {
+              x: [],
+              y: [],
+              type: 'scatter'
+            };
+            
+            var cplusplustrace = {
+              x: [],
+              y: [],
+              type: 'scatter'
+            };
+            
+            var data = [javatrace, cplusplustrace];
+            
+            Plotly.newPlot('histogram', data);
             
             socket.on('javatweet', function(tweet){
                 console.log(tweet);
@@ -43,6 +60,12 @@
                 });
                 $('#java').html('Avg Time: ' + parseInt(javatotaltime/ javacount) 
                 + ' milli secs<br>Tweets = ' + javacount);
+                
+                javatrace.x.push(javacount);
+                javatrace.y.push(tweet.time);
+                if((javacount % 200) == 0) {
+                    Plotly.newPlot('histogram', data);
+                }
             });
             
             socket.on('cplusplustweet', function(tweet){
@@ -67,6 +90,12 @@
                 });
                 $('#cplusplus').html(' Avg Time: ' + parseInt(cplusplustime/ cpluspluscount) 
                 + ' milli secs<br>Tweets = ' + cpluspluscount);
+                
+                cplusplustrace.x.push(cpluspluscount);
+                cplusplustrace.y.push(tweet.time);
+                if((cpluspluscount % 200) == 0) {
+                    Plotly.newPlot('histogram', data);
+                }
             });
         };
     </script>
@@ -74,10 +103,7 @@
     <body>
         <div class="container" style="padding: 20px">
             <div class="row">
-                <div class="col-md-12 jumbotron">
-                    <h2> Aggregator Library - COMS 4995 - Language Library Design C++ </h2>
-                    <h4>Rakesh Yarlagadda (ry2294)</h4>
-                </div>
+                <div id="histogram" style="height:400px;"></div>
             </div>
             <div class="row">
                 <div class="col-md-6">

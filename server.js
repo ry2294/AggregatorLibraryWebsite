@@ -9,8 +9,8 @@ var _ = require('underscore');
 app.use(bodyParser.json());
 
 AWS.config.update({
-    accessKeyId: 'AKIAI4XR5FUYJMO2EN7A', 
-    secretAccessKey: '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',
+    accessKeyId: 'AKIAJCAQWMNEIC7J7AWA', 
+    secretAccessKey: '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',
     region: 'us-west-2'});
     
 var dynamodbDoc = new AWS.DynamoDB.DocumentClient();
@@ -24,7 +24,7 @@ router.post('/tweet', function(req, res) {
     dynamodbDoc.put({
         TableName: req.body.table,
         Item: {
-            "tweetid": req.body.tweetid,
+            "tweetid": String(req.body.tweetid),
             "text": req.body.text,
             "lat": req.body.lat,
             "lon": req.body.lon
@@ -64,7 +64,7 @@ io.on('connection', function(socket){
 	}
   });
   
-  dynamodb.scan({TableName: "cpluplustweet"}, function(error, tweets) {
+  dynamodb.scan({TableName: "cplusplustweet"}, function(error, tweets) {
 	if (error) console.log(JSON.stringify(error));
 	else {
 		console.log(JSON.stringify(tweets.Items[0]));
@@ -74,7 +74,7 @@ io.on('connection', function(socket){
 		        var tweet = {};tweet.lat = rawtweet.lat.S;tweet.lon = rawtweet.lon.S;
     		    tweet.sentiment = rawtweet.sentiment.S;tweet.text = rawtweet.text.S;
     		    tweet.time = rawtweet.time.S;
-    		    io.emit("javatweet", tweet);
+    		    io.emit("cplusplustweet", tweet);
 		    }
 		});
 	}
@@ -88,7 +88,7 @@ router.post('/time', function(req, res) {
     dynamodbDoc.put({
         TableName: req.body.table,
         Item: {
-            "tweetid": req.body.tweetid,
+            "tweetid": String(req.body.tweetid),
             "text": req.body.text,
             "lat": req.body.lat,
             "lon": req.body.lon,
@@ -108,3 +108,4 @@ router.post('/time', function(req, res) {
         }
     });
 });
+
