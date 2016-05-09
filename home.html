@@ -7,98 +7,7 @@
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
         <script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
         <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-        <script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBQ0G5v0Bcx7pxFnJi3c6DcM-97rjMsUho&signed_in=true&libraries=visualization&callback=initialize"></script>
     </head>
-    
-    <script>
-        function initialize() {
-            var socket = io();
-            var javacount = 0, javatotaltime = 0, cpluspluscount = 0, cplusplustime = 0;
-            
-            var map = new google.maps.Map(document.getElementById('map'), {
-                zoom: 3,
-                center: {lat: 39.500, lng: -98.350},
-                mapTypeId: google.maps.MapTypeId.SATELLITE
-            });
-            
-            var javatrace = {
-              x: [],
-              y: [],
-              type: 'scatter'
-            };
-            
-            var cplusplustrace = {
-              x: [],
-              y: [],
-              type: 'scatter'
-            };
-            
-            var data = [javatrace, cplusplustrace];
-            
-            Plotly.newPlot('histogram', data);
-            
-            socket.on('javatweet', function(tweet){
-                console.log(tweet);
-                javacount++;
-                javatotaltime += parseFloat(tweet.time);
-                var marker = new google.maps.Marker({
-                    position: {lat: parseFloat(tweet.lat), lng: parseFloat(tweet.lon)},
-                    map: map,
-                    title: 'Tweet Information',
-                });
-                marker.info = new google.maps.InfoWindow({
-                    position: {lat: parseFloat(tweet.lat), lng: parseFloat(tweet.lon)},
-                    content: '<h5>Text: ' + tweet.text +'</h5>'+ 
-                            '<h5>Sentiment: ' + tweet.sentiment + 
-                            '</h5>' + '<h4>Time: ' + tweet.time + ' milli secs</h5>',
-                    maxWidth: 200
-                });
-                marker.setIcon('http://maps.google.com/mapfiles/ms/icons/red-dot.png');
-                marker.addListener('click', function(){
-                    this.info.open(map, this);
-                });
-                $('#java').html('Avg Time: ' + parseInt(javatotaltime/ javacount) 
-                + ' milli secs<br>Tweets = ' + javacount);
-                
-                javatrace.x.push(javacount);
-                javatrace.y.push(tweet.time);
-                if((javacount % 200) == 0) {
-                    Plotly.newPlot('histogram', data);
-                }
-            });
-            
-            socket.on('cplusplustweet', function(tweet){
-                console.log(tweet);
-                cpluspluscount++;
-                cplusplustime += parseFloat(tweet.time);
-                var marker = new google.maps.Marker({
-                    position: {lat: parseFloat(tweet.lat), lng: parseFloat(tweet.lon)},
-                    map: map,
-                    title: 'Tweet Information',
-                });
-                marker.info = new google.maps.InfoWindow({
-                    position: {lat: parseFloat(tweet.lat), lng: parseFloat(tweet.lon)},
-                    content: '<h5>Text: ' + tweet.text +'</h5>'+ 
-                            '<h5>Sentiment: ' + tweet.sentiment + 
-                            '</h5>' + '<h4>Time: ' + tweet.time + ' milli secs</h5>',
-                    maxWidth: 200
-                });
-                marker.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
-                marker.addListener('click', function(){
-                    this.info.open(map, this);
-                });
-                $('#cplusplus').html(' Avg Time: ' + parseInt(cplusplustime/ cpluspluscount) 
-                + ' milli secs<br>Tweets = ' + cpluspluscount);
-                
-                cplusplustrace.x.push(cpluspluscount);
-                cplusplustrace.y.push(tweet.time);
-                if((cpluspluscount % 200) == 0) {
-                    Plotly.newPlot('histogram', data);
-                }
-            });
-        };
-    </script>
     
     <body>
         <div class="container" style="padding: 20px">
@@ -106,22 +15,78 @@
                 <div id="histogram" style="height:400px;"></div>
             </div>
             <div class="row">
-                <div class="col-md-6">
-                    <h3>C++</h3>
-                    <div id="cplusplus" class="well">
-                    </div>
+                <div class="col-md-4">
+                    <h3>Sequential</h3>
+                    <div id="sequentialstats" class="well"></div>
+                    <div id="sequentialcomments"></div>
                 </div>
-                <div class="col-md-6">
-                    <h3>Java</h3>
-                    <div id = "java" class="well">
-                    </div>
+                <div class="col-md-4">
+                    <h3>Parallel</h3>
+                    <div id="parallelstats" class="well"></div>
+                    <div id="parallelcomments"></div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-md-12">
-                    <div id="map" class="jumbotron"  style="height:350px;"></div>
+                <div class="col-md-4">
+                    <h3>Aggregator</h3>
+                    <div id="aggregatorstats" class="well"></div>
+                    <div id="aggregatorcomments"></div>
                 </div>
             </div>
         </div>
     </body>
+    
+    <script>
+        var socket = io(), 
+        sequentialcount = 0, sequentialtotaltime = 0; aggregatorcount = 0, aggregatortotaltime = 0;
+        parallelcount = 0, paralleltotaltime = 0;
+        var sequentialtrace = {x: [],y: [],type: 'scatter', name: 'Sequential', mode: 'lines+markers'};
+        var aggregatortrace = {x: [],y: [],type: 'scatter', name: 'Aggregator', mode: 'lines+markers', line: {color: 'rgb(219, 64, 82)'}};
+        var paralleltrace = {x: [],y: [],type: 'scatter', name: 'Parallel', mode: 'lines+markers'};
+        var data = [sequentialtrace, aggregatortrace, paralleltrace];
+        Plotly.newPlot('histogram', data, {title:'Latency of Sequential, Parallel & Aggregator Services'});
+        
+        socket.on('sequential', function(comment){
+            console.log(comment);
+            sequentialcount++;
+            sequentialtotaltime += parseFloat(comment.time);
+            
+            $('#sequentialstats').html('Avg Time: ' + parseInt(sequentialtotaltime/ sequentialcount) 
+            + ' milli secs<br>Comments = ' + sequentialcount);
+            $("#sequentialcomments").prepend('<div class="well"><p>Comment: ' 
+            + comment.text + '<br>Sentiment: ' + comment.sentiment + '<br>Time: ' + comment.time + '</p></div>');
+            
+            sequentialtrace.x.push(sequentialcount);
+            sequentialtrace.y.push(comment.time);
+            if((sequentialcount % 10) == 0) {
+                Plotly.newPlot('histogram', data, {title:'Latency of Sequential, Parallel & Aggregator Services'});
+            }
+        });
+        
+        socket.on('parallel', function(comment){
+            console.log(comment);
+            parallelcount++;
+            paralleltotaltime += parseFloat(comment.time);
+            
+            $('#parallelstats').html('Avg Time: ' + parseInt(paralleltotaltime/ parallelcount) 
+            + ' milli secs<br>Comments = ' + parallelcount);
+            $("#parallelcomments").prepend('<div class="well"><p>Comment: ' 
+            + comment.text + '<br>Sentiment: ' + comment.sentiment + '<br>Time: ' + comment.time + '</p></div>');
+            
+            paralleltrace.x.push(parallelcount);
+            paralleltrace.y.push(comment.time);
+        });
+        
+        socket.on('aggregator', function(comment){
+            console.log(comment);
+            aggregatorcount++;
+            aggregatortotaltime += parseFloat(comment.time);
+            
+            $('#aggregatorstats').html('Avg Time: ' + parseInt(aggregatortotaltime/ aggregatorcount) 
+            + ' milli secs<br>Comments = ' + aggregatorcount);
+            $("#aggregatorcomments").prepend('<div class="well"><p>Comment: ' 
+            + comment.text + '<br>Sentiment: ' + comment.sentiment + '<br>Time: ' + comment.time + '</p></div>');
+            
+            aggregatortrace.x.push(aggregatorcount);
+            aggregatortrace.y.push(comment.time);
+        });
+    </script>
 </html>

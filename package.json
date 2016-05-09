@@ -1,5 +1,5 @@
 {
-  "name": "tweetmap",
+  "name": "redditbot",
   "main": "server.js",
   "dependencies": {
     "aws-sdk": "^2.2.11",
